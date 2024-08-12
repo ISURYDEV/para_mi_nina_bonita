@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Be My Valentine</title>
+    <link rel="stylesheet" href="css/inicio.css" />
+  </head>
+  <body>
+    <canvas id="starCanvas"></canvas>
+    <div id="content">
+      <div id="valentineQuestion">
+        <b>Para mi niña bonita <span class="neon-heart">♡</span></b>
+      </div>
+      <div><p>¿Es en serio que quieres abrir este regalo tan especial que tengo para ti?</p></div>
+      <div class="buttonContainer">
+        <button class="answerButton" onclick="window.location.href='transition.html'">
+            Siiiiii
+        </button>
+        <button id="noButton" class="answerButton">Nope jsjsj</button>
+      </div>
+    </div>
+
+    <style type="text/css">
+      /* Cursor personalizado Hello Kitty */
+      * {
+        cursor: url(https://cur.cursors-4u.net/anime/ani-10/ani977.ani), url(https://cur.cursors-4u.net/anime/ani-10/ani977.png), auto !important;
+      }
+    </style>
+
+    <script>
+      document.getElementById("noButton").addEventListener("click", function () {
+        var yesButton = document.querySelector('button[onclick*="transition.html"]');
+        var currentFontSize = parseInt(window.getComputedStyle(yesButton).fontSize);
+        yesButton.style.fontSize = (currentFontSize + 10) + "px"; // Solo el botón "Siiiiii" crecerá
+      });
+
+      const canvas = document.getElementById('starCanvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+      const numStars = 100;
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        createStars();
+      }
+
+      function createStars() {
+        stars = [];
+        for (let i = 0; i < numStars; i++) {
+          let x = Math.random() * canvas.width;
+          let y = Math.random() * canvas.height;
+          let radius = Math.random() * 1.5;
+          let speed = Math.random() * 1 + 0.5;
+          stars.push({ x, y, radius, speed });
+        }
+      }
+
+      function animateStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.shadowBlur = 2;
+        ctx.shadowColor = 'white';
+
+        stars.forEach(star => {
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+          ctx.fill();
+          star.y += star.speed;
+          if (star.y > canvas.height) {
+            star.y = 0;
+            star.x = Math.random() * canvas.width;
+          }
+        });
+
+        requestAnimationFrame(animateStars);
+      }
+
+      function init() {
+        resizeCanvas();
+        animateStars();
+        window.addEventListener('resize', resizeCanvas);
+      }
+
+      init();
+    </script>
+  </body>
+</html>

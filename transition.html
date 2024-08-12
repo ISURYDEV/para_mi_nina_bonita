@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noche Estrellada</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            background-color: #000;
+        }
+
+        .sky {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to top, #010005, #0a0a29, #0c1a42, #1e3061, #2e4977);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            opacity: 0; /* Oculta el contenido inicialmente */
+            transition: opacity 1s ease-in-out; /* Transición para mostrar el contenido */
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .transition {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            opacity: 1;
+            animation: fadeOut 3s ease-in-out forwards; /* Duración de 3 segundos para el desvanecimiento */
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .star-field {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+            animation: moveStar 65s linear infinite, twinkle 2s infinite ease-in-out; /* Aumenta la duración de moveStar */
+            animation-delay: 0s; /* Asegura que el movimiento comience inmediatamente */
+        }
+
+        @keyframes moveStar {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(500px, 500px); }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .bright-star {
+            position: absolute;
+            top: 50%;
+            left: calc(50% - 20px); /* Mueve la estrella ligeramente hacia la izquierda */
+            width: 2px; /* Tamaño igual al de las demás estrellas */
+            height: 2px; /* Tamaño igual al de las demás estrellas */
+            background-color: white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(255, 255, 255, 0); /* Sin brillo inicial */
+            transform: translate(-50%, -50%);
+            animation: moveStar 65s linear infinite, brightStarGlow 4s ease-in-out forwards, brightStarDisappear 0.5s ease-in-out forwards;
+            animation-delay: 0s, 5s, 9s; /* Comienza a moverse inmediatamente, empieza a brillar después de 5 segundos, y desaparece después de 9 segundos */
+        }
+
+        @keyframes brightStarGlow {
+            0% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 200px 150px rgba(255, 255, 255, 1); }
+        }
+
+        @keyframes brightStarDisappear {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            animation: flashAnimation 0.5s ease-in-out forwards;
+            animation-delay: 9s; /* Comienza después de 9 segundos (5s de movimiento + 4s de brillo) */
+        }
+
+        @keyframes flashAnimation {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .stars-neutro {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+            opacity: 0;
+            animation: showStars 3s ease-in forwards;
+            animation-delay: 10s; /* Aparece después de la desaparición de la estrella central */
+        }
+
+        @keyframes showStars {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .fade-to-black {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            opacity: 0;
+            animation: fadeBlack 3s ease-in forwards;
+            animation-delay: 13s; /* Comienza después de 3 segundos con el cielo estrellado */
+        }
+
+        @keyframes fadeBlack {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="transition"></div> <!-- Fondo negro al principio -->
+    <div class="sky">
+        <div class="star-field">
+            <script>
+                for (let i = 0; i < 100; i++) {
+                    let star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.top = Math.random() * 100 + '%';
+                    star.style.left = Math.random() * 100 + '%';
+                    star.style.animationDelay = '-' + (Math.random() * 65) + 's'; /* Asegura que las estrellas no desaparezcan al principio */
+                    star.style.transform = `translate(${Math.random() * 500}px, ${Math.random() * 500}px)`;
+                    document.querySelector('.star-field').appendChild(star);
+                }
+            </script>
+        </div>
+        <div class="bright-star"></div>
+        <div class="flash"></div>
+        <div class="stars-neutro"></div>
+        <div class="fade-to-black"></div>
+    </div>
+
+    <script>
+        // Espera 3 segundos para que la animación de transición se complete antes de mostrar el contenido
+        setTimeout(function() {
+            document.querySelector('.sky').style.opacity = 1; // Muestra el contenido después de la transición
+        }, 3000); // Duración de la transición inicial
+    
+        // Redirige a "visual.html" después de 16 segundos (13s delay + 3s fade)
+        setTimeout(function() {
+            window.location.href = "visual.html";
+        }, 16000); // Tiempo total de las animaciones
+    </script>
+    
+</body>
+</html>

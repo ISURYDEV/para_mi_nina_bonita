@@ -1,0 +1,107 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: "Courier", monospace;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #001f3f, #003b6c, #002b5d, #6e4f8b, #b87c8e);
+  background-size: 400% 400%;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+#starCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+
+#content {
+  z-index: 1;
+  text-align: center;
+  padding: 20px;
+  max-width: 600px; /* Ajusta el ancho máximo del contenido en pantallas grandes */
+  width: 90%; /* Usa un ancho relativo para ajustarse a diferentes tamaños de pantalla */
+  box-sizing: border-box;
+}
+
+#valentineQuestion {
+  font-size: 2.5em; /* Tamaño de fuente fijo para pantallas grandes */
+  margin-bottom: 10px;
+  color: #ffffff;
+  text-shadow: 0 0 2px #ffffff, 0 0 5px #ffffff, 0 0 8px #ffffff; /* Brillo reducido */
+  text-align: center; /* Asegura que el texto esté centrado */
+  line-height: 1.2; /* Mejora la legibilidad */
+  white-space: nowrap; /* Evita que el texto se divida en múltiples líneas */
+}
+
+.neon-heart {
+  color: #ff69b4; /* Neón rosado para el corazón */
+  text-shadow: 0 0 3px #ff69b4, 0 0 7px #ff69b4, 0 0 10px #ff69b4;
+  display: inline; /* Mantiene el corazón en la misma línea que el texto */
+  margin-left: 5px; /* Espacio entre el texto y el corazón */
+  margin-right: 5px; /* Espacio entre el corazón y el texto */
+}
+
+p {
+  font-size: 1.2em; /* Tamaño de fuente fijo para pantallas grandes */
+  margin-bottom: 20px;
+  color: #ffffff;
+  text-shadow: 0 0 2px #ffffff, 0 0 5px #ffffff;
+  line-height: 1.5; /* Espacio entre líneas */
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center; /* Alinea botones al centro */
+  gap: 10px; /* Espacio entre los botones */
+  flex-wrap: wrap; /* Permite que los botones se ajusten en pantallas pequeñas */
+}
+
+.answerButton {
+  padding: 12px 24px;
+  font-size: 1em; /* Tamaño de fuente fijo para pantallas grandes */
+  cursor: pointer;
+  margin: 10px;
+  font-family: "Courier", monospace;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.2); /* Fondo semi-transparente */
+  border: 2px solid #ffffff;
+  border-radius: 12px;
+  transition: all 0.3s ease-in-out;
+}
+
+.answerButton:hover {
+  background-color: rgba(255, 255, 255, 0.3); /* Fondo más claro al pasar el mouse */
+  border-color: #ff69b4; /* Borde rosado neón */
+  box-shadow: 0 0 8px #ff69b4, 0 0 15px #ff69b4; /* Sombra rosada para un efecto más suave */
+}
+
+/* Estilos adicionales para dispositivos móviles */
+@media (max-width: 600px) {
+  #valentineQuestion {
+    font-size: 2em; /* Tamaño de fuente mayor en pantallas pequeñas */
+    white-space: normal; /* Permite que el texto haga saltos de línea */
+  }
+
+  p {
+    font-size: 1.5em; /* Tamaño de fuente mayor en pantallas pequeñas */
+  }
+
+  .answerButton {
+    font-size: 1.2em; /* Tamaño de fuente mayor en pantallas pequeñas */
+    padding: 10px 20px;
+  }
+}

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Visual Novel</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0d0b20, #1b1a2a, #14142d);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .image-container {
+            flex: 3;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-container img {
+            position: absolute;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .image-container img.fade-in {
+            opacity: 1;
+        }
+
+        .text-container {
+            flex: 1;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            color: #eee;
+            font-size: 1.2em;
+        }
+
+        .text-container p {
+            margin: 0;
+            line-height: 1.6;
+            text-shadow: 0 0 8px #00ffff, 0 0 12px #00ffff;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #ffffff;
+            border: none;
+            color: black;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #00ffff;
+            transform: scale(1.1);
+        }
+
+        button:active {
+            transform: scale(0.9);
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: rgba(0, 255, 255, 0.7);
+            border-radius: 50%;
+            width: 2px;
+            height: 2px;
+            opacity: 0.8;
+            animation: twinkle 1.5s infinite, move 10s linear infinite;
+        }
+
+        @keyframes twinkle {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        @keyframes move {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(10px) translateY(10px); }
+            100% { transform: translateX(0) translateY(0); }
+        }
+
+        /* Icono de música */
+        .music-button {
+            font-size: 1.5em;
+            background-color: #00ffff;
+            color: black;
+            padding: 10px;
+            border-radius: 50%;
+            margin: 0 15px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .music-button:before {
+            content: '▶';
+        }
+
+        .music-playing:before {
+            content: '⏸';
+        }
+
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="container">
+        <div class="image-container">
+            <img id="mainImage" src="imagenes/bonitos_recuerdos/empezar/1.jpg" alt=" ">
+        </div>
+        <div class="text-container">
+            <p id="storyText"></p>
+        </div>
+        <div class="button-container">
+            <button id="prevButton">◀</button>
+            <button id="musicButton" class="music-button"></button>
+            <button id="nextButton">▶</button>
+        </div>
+    </div>
+
+    <!-- Elemento de audio oculto -->
+    <audio id="audioPlayer" src=""></audio>
+
+    <script>
+        const storyTextElement = document.getElementById('storyText');
+        const mainImageElement = document.getElementById('mainImage');
+        const prevButton = document.getElementById('prevButton');
+        const nextButton = document.getElementById('nextButton');
+        const musicButton = document.getElementById('musicButton');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        // Lista de canciones
+        const musicPlaylist = [
+            'musica/song1.mp3',
+            'musica/song2.mp3',
+            'musica/song3.mp3'
+        ];
+
+        let currentSong = 0;
+
+        const scenes = [
+            { text: 'No sabía realmente que hacer...' },
+            { text: 'Te juro tiré un chingo de ideas y bocetos.' },
+            { text: 'Empecé y abandoné muchos otros proyectos porque me demandaban mucho tiempo y aspiraba a ideas que no dominaba.' },
+            { text: 'Por eso con todo ésto intenté simplificar.' },
+            { text: 'Me dije...' },
+            { text: 'Que tal hacer un tour de casi todo lo que hemos hecho juntos con nuestras fotitos? jsjsjs' },
+            { text: 'Y bueno, tal vez no esté todo todo todo' },
+            { text: 'Porque son muuuuuuuuuuuuuuuuuuuuchas las cosas que hemos hecho éstos 6 meses.' },
+            { text: 'Y soy malo con las fechas y intenando recordar el orden de todas las cosas lindas que hemos hecho dkjdhshsh :\')' },
+            { text: 'Por eso opté por hablar libremente un poco de todo!' },
+            { text: 'A la hora que estoy escribiendo ésto, no sé dónde puedas estar.' },
+            { text: 'Pero, sería lindo compartir el momento que lees ésto, conmigo.' },
+            { text: 'Aunque...' },
+            { text: 'No crees que la pagina está siendo un poco silencioso?' },
+            { text: 'Probemos una cosa' },
+            { text: '(ay ay espero que funcione disjhs)' },
+            { text: 'Pulsa ese botón !' },
+            { text: '[Si... Ya se que no hace nada.]' },
+            { text: '[Soy yo el de 2 dias del futuro, no logré hacer que fincione x,D]' },
+            { text: '[Tenia pensado en poner botones para reproducir musica de una lista de canciones que recordemos haber escuchado juntos.]' },
+            { text: '[O los que me dedicaste en tus cartas...]' },
+            { text: '[Pero bueno]' },
+            { text: '[Si estamos juntos, pongamos musiquita de fondo de mientra va?]' },
+            { text: 'Bueno ahora si que si.' },
+            { text: '02/01/2024' },
+            { text: 'Empezamos el año' },
+            { text: 'Y como no, me dije de ir después de trabajar 8 horas a pasarlo con una chica que recién conocí, una vieja amiga que solo vi una vez en mi vida con mas chicas para ver una pelicula en el cine :D' },
+            { text: 'Una de las mejores decisiones que he podido tomar en mi vida xD' },
+            { image: 'imagenes/bonitos_recuerdos/empezar/1.jpg', text: 'Allí te conocí' },
+            { image: 'imagenes/bonitos_recuerdos/empezar/2.jpg', text: 'La chica que más destacaba de todas !!' },
+            { image: 'imagenes/bonitos_recuerdos/empezar/2.jpg', text: 'Ya van muchas veces que te lo digo' },
+            { image: 'imagenes/bonitos_recuerdos/empezar/2.jpg', text: 'Que la primera impresión que me diste era que me pareciste muy guapa !!!' },
+            { image: 'imagenes/bonitos_recuerdos/empezar/3.jpg', text: 'Y que tal vez fueras una pija con más de 8 esclavos en Instagram tal que así xDDDD' },
+            { text: 'Quién lo iba a saber...' },
+            { text: 'Todo lo que nos hiba a deparar el futuro desde aquel día... :\')' },
+            { text: 'Más días llegaron en los que fuimos al cine juntos.' },
+            { text: 'Como cuando fuimos a ver "Le Garçon et le Héron" de Studio Ghibli con tu hermano' },
+            { image: 'imagenes/bonitos_recuerdos/cine/4.jpg', text: 'Cuando fuimos a ver la película de "Spy x Family" (con la gente manandandonos a callar por reir y hablar tanto jsjsjsj)' },
+            { image: 'imagenes/bonitos_recuerdos/cine/4.jpg', text: '(Pinches Otakus)' },
+            { image: 'imagenes/bonitos_recuerdos/cine/5.jpg', text: 'O el mejor día de cine de todos ! Cuando fuimos a ver la película de Intensamente 2 en grupo!' },
+            { image: 'imagenes/bonitos_recuerdos/cine/5.jpg', text: 'Fuimos acorde con la personalidad que mas destacaba de nosostros (o buenos, mas o menos)' },
+            { image: 'imagenes/bonitos_recuerdos/cine/6.jpg', text: '(mmh.. o tal vez si? jsjsjjss)' },
+            { text: 'Recuerdas ese dia en el cine mor?' },
+            { text: 'Nosotros dos... Tomados de la mano' },
+            { text: 'Besándonos incluso en muchos ratos de la película jsjsjss' },
+            { text: 'Es tan lindo recordar esto en cuestion.. que ya quisiera volver al cine ! Sin importar cuál película ver siendo contigo !!' },
+            { text: '(Bueno no, mejor algo bueno que ver, no como la película esa de Aquaman fidhdhdhd no vamos a pagar por nada XDD)' },
+            { text: 'Pero realmente, lindos momentos asi hemos compartido en muchos sitios.' },
+            { text: 'Empecemos mirando mmh.. No se.' },
+            { text: 'Qué tal el museo de Confluence ?' },
+            { text: 'Recordaras la exposicion de amor que recorrimos juntos cierto?' },
+            { image: 'imagenes/bonitos_recuerdos/museo/6.jpg', text: 'Y esta hermosa foto que sacamos en aquel espejo ayy' },
+            { image: 'imagenes/bonitos_recuerdos/museo/6.jpg', text: 'Fue realmente hermoso hacer ese tour contigo poco después de empezar a salir juntos.' },
+            { image: 'imagenes/bonitos_recuerdos/museo/7.jpg', text: 'Nos llegamos a sacar incluso fotos en el ascensor de alla jsjsjjs' },
+            { image: 'imagenes/bonitos_recuerdos/museo/8.jpg', text: 'Ayy pensandolo, como extrano también las veces que nos besabamos por muuuchos minutos antes de despedirnos en tu casa.' },
+            { text: 'Recordar como el ascensor, subia y bajaba, subia y bajaba, jsjsjsjsjs' },
+            { text: 'Ayyy, y como no olvidar las fotos bien pros que sacabamos fuera del museo cuando iba anocheciendo.' },
+            { image: 'imagenes/bonitos_recuerdos/museo/9.jpg', text: 'Como esta.' },
+            { image: 'imagenes/bonitos_recuerdos/museo/10.jpg', text: 'Esta.' },
+            { image: 'imagenes/bonitos_recuerdos/museo/11.jpg', text: 'O incluso esta ayy' },
+            { image: 'imagenes/bonitos_recuerdos/museo/11.jpg', text: '(Cuando habia gente que queria pasar y estaban esperando a que sacaramos las fotos jsjsjsjsjs)' },
+            { text: 'Viendonos vestidos asi, recuerdo los dias frios que pasabamos' },
+            { text: 'Como la noche aquella en la que mirabamos las estrellas juntos o...' },
+            { image: 'imagenes/bonitos_recuerdos/correr/11.jpg', text: 'Cuando saliamos a correr a las 6h de la manana !!' },
+            { image: 'imagenes/bonitos_recuerdos/correr/11.jpg', text: 'Ya se que eso es algo que nunca olvidaras jsjsjsjs' },
+            { image: 'imagenes/bonitos_recuerdos/correr/12.jpg', text: 'Era algo que emprendimos juntos, no crees que es increible eso?' },
+            { image: 'imagenes/bonitos_recuerdos/correr/12.jpg', text: 'Motivados juntos para despertarnos temprano, y salir a correr bien temprano en cuando hacia taaanto frio.' },
+            { image: 'imagenes/bonitos_recuerdos/correr/13.jpg', text: 'Fue de lo mas lindo... Al igual que ir al Gym.' },
+            { text: 'Nos llegamos a ayudar mutuamente a mantenernos sanos.' },
+            { text: 'Hablabamos de calorias, compramos proteina, creatina, haciamos muucho ejercicio, intentabamos comer sano, veiamos rutinas...' },
+            { text: 'Ya se que estas vacaciones perdimos un poco todas esas ideas y la motivacion.' },
+            { text: 'Pero ay que lindo seria al menos volver al Gym (cambiandolo por otro mas barato, eso si jsjsjjss)' },
+            { image: 'imagenes/bonitos_recuerdos/correr/14.jpg', text: '(Mira una fotito de un dia que salimos a correr juntos en el amanecer)' },
+            { text: 'Wesh mor, que incluso saliamos a correr en pleno Ramadan jsjsjs' },
+            { text: 'Como no olvidar eso también...' },
+            { text: 'El Ramadan que vivimos juntos !' },
+            { text: 'Fue simplemente hermoso los momentos que esperabamos para poder comer' },
+            { text: 'Para poder tocarnos incluso ! Jsjsjsjs' },
+            { text: 'Los dulces arabes..' },
+            { text: 'Como nos acercanamos a la religion !' },
+            { text: 'Y lo mas importante...' },
+            { text: '23/03/2024' },
+            { image: 'imagenes/conversion/15.jpg', text: 'El dia que te convertiste !' },
+            { image: 'imagenes/conversion/15.jpg', text: '(Esta foto es una captura del video que hiciste, el dia que te convertiste conmigo)' },
+            { image: 'imagenes/conversion/15.jpg', text: '(Sinceramente, habia olvidado que habiamos grabado ese momento.. Y esta en nuestro album de RECUERDOS ;-;)' },
+            { image: 'imagenes/conversion/15.jpg', text: 'Aunque en casi todo el resto del video, el movil se cae porque nos dimos un largo abrazo en medio de lagrimas ay ay ;^;' },
+            { text: 'Tampoco sera dificil olvidar todo esto.' },
+            { image: 'imagenes/conversion/16.jpg', text: 'Cada lindo esfuerzo que hacias en Ramadan para aprender del Islam' },
+            { image: 'imagenes/conversion/16.jpg', text: '(Ay ese Coran rosado que no sabia para nada que podia existir jsjsjs)' },
+            { image: 'imagenes/conversion/17.jpg', text: 'Lo feliz que se te veia después de tu conversion' },
+            { image: 'imagenes/conversion/18.jpg', text: 'O lo linda que seguias viendote...' },
+            { image: 'imagenes/conversion/18.jpg', text: 'Tanto usando el fular como haciendo la priere' },
+            { text: 'También hecho de menos hacer la priere a tu lado mor' },
+            { text: 'Aunque estos dias se ven algo sueltos..' },
+            { text: 'Espero poder pasar todos los proximos Ramadan a tu lado' },
+            { text: 'Yo me comprometo en seguir apoyandote en todo' },
+            { text: 'Todo todito !' },
+            { text: 'Pero ayyyyy moooor' },
+            { text: 'Me doy cuenta que hay tantos recuerdos que compartir jsjsjsjs' },
+            { text: 'Vayamos por' },
+            { text: 'Recordarte como empezo a florecer mi interior desde que llegaste' },
+            { image: 'imagenes/flores/19.jpg', text: '(Procedo a introducir fotitos nuestras con flores jsjsjs)' },
+            { image: 'imagenes/flores/20.jpg', text: 'En mi interior...' },
+            { image: 'imagenes/flores/21.jpg', text: '...empezo a florecer...' },
+            { image: 'imagenes/flores/22.jpg', text: '...desde el primer dia que llegaste...' },
+            { image: 'imagenes/flores/23.jpg', text: '...en mi vida ♡' },
+            { image: 'imagenes/flores/24.jpg', text: 'Mi amor, la rosa mas hermosa del jarrdin de la vida.' },
+            { text: 'Me cuesta hacer transiciones jsjsjs' },
+            { text: 'Pero hablando de flores, me hizo recordar el girasol que tanto busqué y casin mata jsjsjs' },
+            { text: 'Por eso la decoracion de lo que te di, porque se lo tanto que te encantan.' },
+            { text: 'Pienso...' },
+            { text: 'En los detallitos que nos hemos hecho al largo del tiempo' },
+            { text: 'Sobre todo los tuyos, tan hermosos hechos a mano jeje..' },
+            { image: 'imagenes/regalitos/25.jpg', text: 'Como este ! El dia que me hiciste galletitas ayyy' },
+            { image: 'imagenes/regalitos/25.jpg', text: 'Como no olvidar ese dia.. Que casi se me caen las lagrimas....' },
+            { image: 'imagenes/regalitos/25.jpg', text: 'Te juro que sabian tan ricas... Mas sabiendo en que los hiciste exclusivamente para mi aaah TwT' },
+            { text: 'Por alguna razon que desconozco, mi amor explota por ti cada vez que me haces un pequeno detalle' },
+            { image: 'imagenes/regalitos/26.jpg', text: 'Como este' },
+            { image: 'imagenes/regalitos/27.jpg', text: 'Este' },
+            { image: 'imagenes/regalitos/28.jpg', text: 'O sobre todo este !!' },
+            { image: 'imagenes/regalitos/28.jpg', text: 'Buah... Las cartas...' },
+            { image: 'imagenes/regalitos/28.jpg', text: 'Sin duda uno de los mejores regalos que me han hecho en la vida...' },
+            { text: 'En verdad han sido tantos los detalles que me has hecho mor' },
+            { text: 'Y no solo materiales, también todos los momentos que hemos pasado juntos' },
+            { text: 'Es con solo ver....' },
+            { image: 'imagenes/regalitos/29.jpg',  text: '...' },
+            { image: 'imagenes/regalitos/30.jpg',  text: '...' },
+            { image: 'imagenes/regalitos/31.jpg',  text: 'Lo tanto que pensamos en nosotros... Jjssjsjsjs' },
+            { image: 'imagenes/regalitos/31.jpg',  text: 'Tus mordidas jejeej' },
+            { image: 'imagenes/regalitos/31.jpg',  text: 'También hay detayes como estos que me gustan' },
+            { image: 'imagenes/regalitos/32.jpg',  text: 'Como que lleves puesta mi ropa ayyyy ;^;' },
+            { image: 'imagenes/regalitos/32.jpg',  text: 'Por qué?' },
+            { image: 'imagenes/regalitos/32.jpg',  text: 'Y bien...' },
+            { text: 'No lo se sjsjjsjs' },
+            { text: 'Simlemente me gusta y ya ;^;' },
+            { text: 'Un fetiche?' },
+            { text: 'Naaah' },
+            { text: 'Hablando de fetiches emmm' },
+            { text: 'Y si mejor exploramos otras cosas mas antes de calentarnos? jsjjsjsjsj' },
+            { text: 'Mmmh' },
+            { text: 'Que tal reirnos un poco de nuestras estupideces? jsjsjsjs' },
+            { image: 'imagenes/estupideces/33.jpg', text: 'Calamardo?' },
+            { image: 'imagenes/estupideces/34.jpg', text: 'Drogados en paris jsjsjs' },
+            { image: 'imagenes/estupideces/35.jpg', text: 'La mas cool' },
+            { image: 'imagenes/estupideces/36.jpg', text: 'Y ese papucho??' },
+            { image: 'imagenes/estupideces/37.jpg', text: 'Que nos pasa? jsjsjs' },
+            { image: 'imagenes/estupideces/38.jpg', text: 'Uy, yo siendote infiel con otro' },
+            { image: 'imagenes/estupideces/39.jpg', text: 'Teniendo la batalla mas epica contra tu padre' },
+            { image: 'imagenes/estupideces/40.jpg', text: 'Cuando llovio nata por todos lados jsjsjs' },
+            { image: 'imagenes/estupideces/41.jpg', text: 'Bebiendo lo que te sale por alli abajo uyyy' },
+            { image: 'imagenes/estupideces/42.jpg', text: 'Zzz (no me mates sjsjss)' },
+            { image: 'imagenes/estupideces/43.jpg', text: 'Risas' },
+            { image: 'imagenes/estupideces/44.jpg', text: 'Risaas' },
+            { image: 'imagenes/estupideces/45.jpg', text: 'Y muchas risas' },
+            { image: 'imagenes/estupideces/45.jpg', text: 'Viendo esta ultima foto...' },
+            { text: 'Como no olvidarme de la fiesta sorpresa que me hicieron' },
+            { text: 'Bueno...' },
+            { text: '"Sorpresa"' },
+            { text: 'Ya sabes jsjsjsjs' },
+            { text: 'Aunque no lo fuera realmente, la verdad que no lo olviadré igualmente' },
+            { text: 'BMe encanto el dia !' },
+            { text: '(Hubiera sido genial poner fotitos de la sorpresa pero bueno, no hubo jsjsjjs)' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/45.jpg', text: 'Pero bueno, aca va una de la tarde !' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/45.jpg', text: 'De cuando nos abrazamos despues de soplar las velas...' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/46.jpg', text: 'Fue tan lindo ese detalle...' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/47.jpg', text: 'Incluso el conejito se nos unio ! Jsjsjjs' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/48.jpg', text: 'Luego abrieno vuestros regalos' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/49.jpg', text: 'contigo a mi lado :\')' },
+            { image: 'imagenes/bonitos_recuerdos/cumpleanos/49.jpg', text: '(por cierto, algun dia hay que dormir juntos con nuestros peluches !!!)' },
+            { text: '(También lo que me encanto de ese dia, fue cuando tuvimos que hablar con honestidad entre nosotros ayy' },
+            { text: '(Cuando te escuché a ti... No evité que me salieran las lagrimas ayy ;-----;' },
+            { text: 'Desde aqui, te vuelvo a dar las gracias !' },
+            { text: 'Por celebrar mi cumpleee ! Fue geniaal mor ! ' },
+            { text: 'Que buen momento para transicionar y ir al lago no?' },
+            { text: 'Ya que aquel dia fuimos y woaah' },
+            { text: 'Tantos momentos geniales vivimos alli' },
+            { text: '(me queda poco tiempo ayyy asi que ire poniendo lo que pueda para poder teminar sin hablar mucho)' },
+            { text: '(lo siento lo siento ;^;)' },
+            { image: 'imagenes/bonitos_recuerdos/lago/50.jpg', text: 'Ya se que esta no es de las fotos que mas te gustan de alla...' },
+            { image: 'imagenes/bonitos_recuerdos/lago/50.jpg', text: '(no me mates)' },
+            { image: 'imagenes/bonitos_recuerdos/lago/50.jpg', text: 'Pero te juro para mi son de las mejores fotos !' },
+            { text: 'Me trae tantos recuerdos ese sitio...' },
+            { text: 'Las veces que fuimos con tus padres a hacer parrillada' },
+            { text: 'Las veces que nadamos juntos o incluso a solas' },
+            { image: 'imagenes/bonitos_recuerdos/bici/50.jpg', text: 'El dia que fuimos en bicicleta ;-;' },
+            { text: 'Bueno ya se que no fue el mejor dia para eso jsjsjjs' },
+            { image: 'imagenes/bonitos_recuerdos/bici/51.jpg', text: 'Pero si este ! (aunque llegamos a pagar 35€ creo ayy)' },
+            { text: 'Pero si el lago fue lindo por casi todos los momentos que he compartido contigo' },
+            { text: 'Tanto en grupo como...' },
+            { text: 'Intimos jejeje...' },
+            { text: 'También de recordar lo lindo que se siente tocar tu biel bajo el agua' },
+            { text: 'Hacerlo después de habernos mojado, holiendo la vegetacion de al rededor y la adrenalina uff' },
+            { text: 'Ayyy Ismaaa calmate.. ' },
+            { text: 'Incluso el mini Isma lo recuerda y quiere hablar cioifhfdsf' },
+            { text: 'Buenon ya que...' },
+            { text: 'En el bosque también, como no olvidar...' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/52.jpg', text: 'Todos esos momentos lindos...' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/53.jpg', text: '...explorando...' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/54.jpg', text: '...cada rincon... ' },
+            { text: 'de tu cuerpo...' },
+            { text: 'Ayyyy digo' },
+            { text: 'Del bosque !!' },
+            { text: 'Si si eso jsjsjs' },
+            { text: 'Del bosque.' },
+            { text: '(y de tu cuerpo también, porque mentirse jeejej..)' },
+            { text: 'Aish Samy no te voy a mentir' },
+            { text: 'Al momento que te escribo ahora estoy algo encendido' },
+            { text: '"Algo" para no decir bastante djsfijdfhb' },
+            { text: 'Y es que debo escribir asi con las ganas, que si no luego no tendré el tiempo de esperar apagarme' },
+            { text: 'Necesito terminar esto cuando antes djsihfdb' },
+            { text: 'Y bueno..' },
+            { text: 'Anado que te extrano y te extrane mucho mor...' },
+            { text: 'Mas de lo que crees, extrane todo en ti, sentirte.. En todos los sentidos' },
+            { text: 'Te amo <3' },
+            { text: 'Bueno ahora, pasemos a transicionar con otra cosa doijzfihs' },
+            { text: 'Mmmh...' },
+            { text: 'Como por ejemplo, Paris !' },
+            { text: 'Son tantas fotos.. Que codificar una a una... Ufff' },
+            { text: 'Que se me ocurrio hacer esto sjsjjsj' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/paris.gif', text: 'Un GIF !' },
+            { text: '[Soy yo de nuevo... El GIF no carga, asi que te lo ensenare de alguna otra forma.... TWT]' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/paris.gif', text: 'Y es que como ame esa semana...' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/paris.gif', text: 'Enteramente dedicada a solo nosotros' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/paris.gif', text: 'Hicimos de todo !' },
+            { image: 'imagenes/bonitos_recuerdos/bosque/paris.gif', text: 'Paseamos juntos, fuimos en barco, a la Torre Eiffel, comimos juntos, fuimos a varios parques, cojimos un chingo de transporte' },
+            { text: 'Logramos dormir juntos por primera vez ayy' },
+            { text: 'Y como deseo repetir esa noche.. Si dormimos juntos en Camping como dijimos ayy' },
+            { text: 'O en tu casa a escondidas ! :00' },
+            { text: 'La sensacion..... Seria tan genial mor... <33' },
+            { text: 'Y es que como no querer compartir noches tan lindas como alguien como tu...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/25.jpg', text: 'La nina mas bonita y la que me hace tan feliz...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/25.jpg', text: 'Hemos vivo por tantas aventuras...' },
+            { text: '(Que no tengo tiempp de presentar todo indidualmente aaaah !)' },
+            { text: '(Voy a ir speed speed speed dkokjfdihfid)' },
+            { text: 'Presentando de los dias que mas nos lo hemos pasado bien juntoos !' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/1.jpg', text: 'Tanto abrzazados...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/2.jpg', text: 'Como tomados de la mano..' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/3.jpg', text: 'Riendo juntos...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/4.jpg', text: 'Pasando momentos tan increibles juntos..' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/5.jpg', text: 'Sonriendo...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/6.jpg', text: 'Siendo cutes jsjsjs' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/7.jpg', text: 'Con familiares tuyos que vienen de tan lejos...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/8.jpg', text: 'Haciendo cosas nuevas...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/9.jpg', text: 'En familia' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/99.jpg', text: 'A solas' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/10.jpg', text: 'Momentos...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/11.jpg', text: 'Tan llenos de vida...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/12.jpg', text: 'Tan felices...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/15.jpg', text: '...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/22.jpg', text: '...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/14.jpg', text: '...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/23.jpg', text: '...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/18.jpg', text: '...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/18.jpg', text: 'Es tan conmovedor...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/18.jpg', text: 'Al estado actual, incluso mientras estoy escribiendo esto...' },
+            { image: 'imagenes/bonitos_recuerdos/aventuras/18.jpg', text: 'No logro detener mis lagrimas' },
+            { text: 'Y es que...' },
+            { text: 'Tanto te extrane mor...' },
+            { text: 'Y son tantas las cosas que ver...' },
+            { text: 'Y ayy... Me esta dando un hambre ahora' },
+            { text: 'Casi no he comido en todo el dia para poder avanzar esto sjsjsjs' },
+            { text: 'No me pegues para cuando me veas eeeh ;^;' },
+            { text: 'Y eso mismo... Como me encanta, cuando te preocupas por mi ay' },
+            { text: 'Me trae incluso recuerdos...' },
+            { image: 'imagenes/comer/1.jpg',  text: 'De todas las veces que comimos juntos' },
+            { image: 'imagenes/comer/2.jpg',  text: 'Tantas cosas jsjjsjsjs' },
+            { image: 'imagenes/comer/3.jpg',  text: 'Y como no con esta reina aaah' },
+            { image: 'imagenes/comer/4.jpg',  text: 'Esta nina, que me hace tanto sonreir :\')' },
+            { text: 'Hecho también en falta...' },
+            { image: 'imagenes/cocinar/1.jpg', text: 'Cocinar a tu lado' },
+            { image: 'imagenes/cocinar/3.jpg', text: 'Y yo para algun dia te juro...' },
+            { image: 'imagenes/cocinar/11.jpg', text: 'Me compprometo a cocinarte cosas ricas también !' },
+            { image: 'imagenes/cocinar/11.jpg', text: '(Me dije... La semana para cuando se vayan mis padres. SOLO YO TOCO LA COCINA !!)' },
+            { image: 'imagenes/cocinar/2.jpg', text: 'T tu, me daras tu opinion ayy' },
+            { image: 'imagenes/cocinar/1.jpg', text: '(Ya se que las fotos no son tan lindas... Pero me dieron un poco de gracia jsjsjsj)' },
+            { text: 'Y ahora no tengo más tiempo...' },
+            { text: 'Tenía planeado retomar más fotos' },
+            { text: 'Pero dime tú en tan poco tiempo cómo seleccionar entre casi 1000 fotos de nuestro álbum ayyy jjsjsjs' },
+            { text: 'Tenía también previsto de alguna forma terminar la historia de tu carta' },
+            { text: 'Pero ya valió, si quieres otro día jugamos a eso jsjsjs' },
+            { text: 'Como cuando inventamos la historia con las cartas del pajarito :\')' },
+            { text: 'Y ay mor, espero que las cosas sigan igual de bien como estos últimos 6 meses' },
+            { text: 'Y es cierto que ha habido problemas a veces' },
+            { text: 'Pero...' },
+            { text: 'Algo que nos diferencia de los demás, es que nosotros logramos siempre arreglar las cosas hablando' },
+            { text: 'Porque nosotros podemos con todo' },
+            { text: 'Y yo me comprometo a seguir apoyándote siempre' },
+            { text: 'Siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre siempre' },
+            { text: 'Siempre que pueda, allí estaré por ti mor' },
+            { text: 'Mi niña bonita' },
+            { text: 'Aquí entonces termino con este regalo que tengo para ti' },
+            { text: 'Espero que para cuando la leas, esté allí contigo' },
+            { image: 'imagenes/bonitos_recuerdos/fuiste/1.jpg', text: 'Y poder abrazarte, besarte, sentirte de nuevo...' },
+            { image: 'imagenes/bonitos_recuerdos/fuiste/2.jpg',  text: 'SENTIRTE AL FIN CON TODAS ESAS GANAS QUE TENÍA DE VERTE' },
+            { image: 'imagenes/bonitos_recuerdos/fuiste/3.jpg',  text: 'Y termino diciéndote amor...' },
+            { image: 'imagenes/final/2.jpg',  text: 'Que te amo...' },
+            { image: 'imagenes/final/2.jpg',  text: 'Desde lo más profundo de mi corazón' },
+            { image: 'imagenes/final/2.jpg',  text: 'Gracias por todo, gracias gracias gracias gracias' },
+            { image: 'imagenes/final/2.jpg',  text: 'Y que...' },
+            { image: 'imagenes/final/2.jpg',  text: 'Te amo ♡' },
+
+
+            // feknfkrnergrgregqrsgrsgrgrg
+        ];
+
+        let currentScene = 0;
+
+        function typeWriter(text, i, fnCallback) {
+            const typingSpeed = 30;
+            if (i < text.length) {
+                storyTextElement.innerHTML = text.substring(0, i + 1) + '<span aria-hidden="true"></span>';
+                setTimeout(function() {
+                    typeWriter(text, i + 1, fnCallback)
+                }, typingSpeed);
+            } else if (typeof fnCallback == 'function') {
+                setTimeout(fnCallback, 700);
+            }
+        }
+
+        function showScene(index) {
+            currentScene = index;
+            if (currentScene < 0) {
+                currentScene = 0;
+            }
+            if (currentScene >= scenes.length) {
+                currentScene = scenes.length - 1;
+            }
+
+            const scene = scenes[currentScene];
+
+            if (scene.image) {
+                mainImageElement.src = scene.image;
+                mainImageElement.classList.remove('fade-in');
+                void mainImageElement.offsetWidth;
+                mainImageElement.classList.add('fade-in');
+            } else {
+                mainImageElement.src = '';
+            }
+
+            storyTextElement.innerHTML = '';
+            typeWriter(scene.text, 0);
+
+        
+            if (scene.text === 'Pulsa ese botón !') {
+                musicButton.style.display = 'inline-block';
+            } else {
+                musicButton.style.display = 'none';
+            }
+        }
+
+        prevButton.addEventListener('click', () => {
+            showScene(currentScene - 1);
+        });
+
+        nextButton.addEventListener('click', () => {
+            showScene(currentScene + 1);
+        });
+
+        musicButton.addEventListener('click', () => {
+            if (audioPlayer.paused) {
+                audioPlayer.src = musicPlaylist[currentSong];
+                audioPlayer.play();
+                musicButton.classList.add('music-playing');
+            } else {
+                audioPlayer.pause();
+                musicButton.classList.remove('music-playing');
+            }
+        });
+
+        function createStars() {
+            const starField = document.querySelector('.stars');
+            const numberOfStars = 100;
+            
+            for (let i = 0; i < numberOfStars; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.width = `${Math.random() * 2 + 1}px`;
+                star.style.height = star.style.width;
+                star.style.animationDuration = `${Math.random() * 5 + 5}s`;
+                starField.appendChild(star);
+            }
+        }
+
+        createStars();
+
+        showScene(currentScene);
+    </script>
+</body>
+</html>
